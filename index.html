@@ -1,1 +1,1458 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Инженерный дашборд дорожного строительства</title>
+<style>
+  :root {
+    --radius: 16px;
+    --radius-sm: 11px;
+    --font: 'Inter', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'JetBrains Mono', 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+    --ease: cubic-bezier(.4, 0, .2, 1);
+  }
+  html[data-theme="dark"] {
+    --bg: #080d15; --bg-soft: #0d1420; --surface: #111a27; --surface-2: #16212f;
+    --surface-3: #1b283a; --border: #24344b; --border-soft: #1a2637;
+    --text: #e9eff9; --muted: #8698b4; --accent: #f5a524; --accent-2: #ff8a3d;
+    --accent-contrast: #1b1105; --teal: #2dd4bf; --ok: #34d399; --warn: #f5a524;
+    --danger: #ff6b6b; --shadow: 0 20px 44px -24px rgba(0, 0, 0, .95);
+    --glow-accent: 0 14px 40px -16px rgba(245, 165, 36, .55);
+    --grid-line: rgba(120, 160, 220, .045);
+  }
+  html[data-theme="light"] {
+    --bg: #eaeff7; --bg-soft: #e2e9f3; --surface: #ffffff; --surface-2: #f4f7fc;
+    --surface-3: #eaf0f9; --border: #d5e0ee; --border-soft: #e4ebf5;
+    --text: #0c1a2b; --muted: #5b7290; --accent: #e08c0b; --accent-2: #f26a1b;
+    --accent-contrast: #ffffff; --teal: #0d9488; --ok: #059669; --warn: #d97706;
+    --danger: #dc2626; --shadow: 0 16px 34px -22px rgba(12, 26, 43, .45);
+    --glow-accent: 0 14px 34px -18px rgba(224, 140, 11, .7);
+    --grid-line: rgba(20, 60, 120, .035);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; font-family: var(--font); color: var(--text);
+    background-color: var(--bg);
+    background-image:
+      radial-gradient(1100px 560px at 88% -12%, rgba(245, 165, 36, .10), transparent 62%),
+      radial-gradient(900px 520px at -6% 104%, rgba(45, 212, 191, .09), transparent 58%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, var(--grid-line) 39px, var(--grid-line) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, var(--grid-line) 39px, var(--grid-line) 40px);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color .3s var(--ease), color .3s var(--ease);
+  }
+  ::selection { background: var(--accent); color: var(--accent-contrast); }
 
+  .app-header {
+    position: sticky; top: 0; z-index: 60;
+    background: color-mix(in srgb, var(--bg) 76%, transparent);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .header-inner {
+    max-width: 1320px; margin: 0 auto; padding: 12px 22px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .brand-mark {
+    width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: var(--accent-contrast); box-shadow: var(--glow-accent); flex-shrink: 0;
+  }
+  .brand-mark svg { display: block; }
+  .brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+  .brand-title { font-size: 15px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; }
+  .brand-sub { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; margin-top: 3px; }
+
+  .tabs {
+    display: flex; gap: 4px; padding: 5px; margin-left: auto;
+    background: var(--surface-2); border: 1px solid var(--border-soft);
+    border-radius: 999px; overflow-x: auto; scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    appearance: none; border: 0; background: transparent; color: var(--muted);
+    font-family: inherit; font-size: 13.5px; font-weight: 700; letter-spacing: -.005em;
+    padding: 10px 20px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+    transition: color .18s var(--ease), background .18s var(--ease), box-shadow .18s var(--ease);
+  }
+  .tab:hover { color: var(--text); }
+  .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tab[aria-selected="true"] {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: var(--accent-contrast); box-shadow: var(--glow-accent);
+  }
+
+  .theme-toggle {
+    flex-shrink: 0; width: 44px; height: 44px; display: grid; place-items: center;
+    border-radius: 13px; border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text); cursor: pointer;
+    transition: transform .18s var(--ease), border-color .18s var(--ease), background .18s var(--ease);
+  }
+  .theme-toggle:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .theme-toggle:active { transform: translateY(0) scale(.96); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  html[data-theme="dark"] .icon-sun { display: none; }
+  html[data-theme="light"] .icon-moon { display: none; }
+
+  main { max-width: 1320px; margin: 0 auto; padding: 30px 22px 70px; }
+  .panel { display: none; }
+  .panel.active { display: block; animation: panelIn .34s var(--ease); }
+  @keyframes panelIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .panel-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 20px; flex-wrap: wrap; margin-bottom: 22px;
+  }
+  .panel-title { margin: 0; font-size: clamp(20px, 2.4vw, 27px); font-weight: 800; letter-spacing: -.022em; }
+  .panel-sub { margin: 7px 0 0; font-size: 13.5px; color: var(--muted); max-width: 680px; line-height: 1.55; }
+  .formula-chip {
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+    border-radius: 13px; background: var(--surface); border: 1px solid var(--border);
+    box-shadow: var(--shadow); flex-shrink: 0;
+  }
+  .formula-label { font-size: 10.5px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; color: var(--muted); }
+  .formula-chip code { font-family: var(--mono); font-size: 14.5px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .formula-chip code .z-part { color: var(--teal); }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 20px; align-items: start; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border-soft);
+    border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow);
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+  .card-head h2 { margin: 0; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+
+  .btn-ghost {
+    appearance: none; border: 1px solid var(--border); background: transparent;
+    color: var(--muted); font-family: inherit; font-size: 12px; font-weight: 700;
+    padding: 7px 13px; border-radius: 9px; cursor: pointer; transition: .18s var(--ease);
+  }
+  .btn-ghost:hover { color: var(--danger); border-color: var(--danger); }
+  .btn-ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .field { margin-bottom: 6px; }
+  .field label { display: block; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 9px; letter-spacing: -.005em; }
+  .sym { font-family: var(--mono); font-style: italic; font-weight: 700; color: var(--accent); margin-left: 3px; }
+
+  .input-wrap { position: relative; }
+  .input-wrap input {
+    width: 100%; padding: 15px 62px 15px 16px; font-family: var(--mono);
+    font-size: 17px; font-weight: 700; color: var(--text); background: var(--surface-2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); outline: none;
+    transition: border-color .18s var(--ease), box-shadow .18s var(--ease), background .18s var(--ease);
+  }
+  .input-wrap.no-unit input { padding-right: 16px; }
+  .input-wrap input::placeholder { color: var(--muted); opacity: .5; font-weight: 600; }
+  .input-wrap input:hover { border-color: var(--muted); }
+  .input-wrap input:focus { border-color: var(--accent); background: var(--surface-3); box-shadow: 0 0 0 3px rgba(245, 165, 36, .17); }
+  .input-wrap input.invalid { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(255, 107, 107, .16); }
+  .input-wrap .unit {
+    position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+    font-family: var(--mono); font-size: 12.5px; font-weight: 700; color: var(--muted);
+    pointer-events: none; user-select: none;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+  .field-msg { min-height: 17px; margin: 6px 0 12px; font-size: 12px; font-weight: 600; line-height: 1.4; transition: color .18s var(--ease); }
+  .field-msg.error { color: var(--danger); }
+  .field-msg.warn { color: var(--warn); }
+
+  .card-note {
+    margin: 6px 0 0; padding-top: 15px; border-top: 1px dashed var(--border);
+    font-size: 12.5px; line-height: 1.6; color: var(--muted);
+  }
+
+  .btn-calc {
+    width: 100%; margin-top: 16px; padding: 15px 20px; border: 0;
+    border-radius: var(--radius-sm); background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: var(--accent-contrast); font-family: inherit; font-size: 15px; font-weight: 800;
+    letter-spacing: -.005em; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 10px; box-shadow: var(--glow-accent);
+    transition: transform .16s var(--ease), filter .16s var(--ease), box-shadow .16s var(--ease);
+  }
+  .btn-calc:hover { transform: translateY(-1px); filter: brightness(1.06); }
+  .btn-calc:active { transform: translateY(0) scale(.99); }
+  .btn-calc:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .btn-calc svg { display: block; flex-shrink: 0; }
+  .btn-calc:disabled { opacity: .55; cursor: not-allowed; filter: none; transform: none; }
+
+  .btn-transfer {
+    width: 100%; margin-top: 18px; padding: 14px 18px; border: 1.5px dashed var(--accent);
+    border-radius: var(--radius-sm); background: transparent; color: var(--accent);
+    font-family: inherit; font-size: 13.5px; font-weight: 800; letter-spacing: -.005em;
+    line-height: 1.3; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 10px; text-align: center;
+    transition: background .18s var(--ease), border-style .18s var(--ease), border-color .18s var(--ease),
+      transform .16s var(--ease), opacity .18s var(--ease), color .18s var(--ease);
+  }
+  .btn-transfer:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 11%, transparent);
+    border-style: solid; transform: translateY(-1px);
+  }
+  .btn-transfer:active:not(:disabled) { transform: translateY(0) scale(.99); }
+  .btn-transfer:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .btn-transfer:disabled { opacity: .32; cursor: not-allowed; border-color: var(--border); color: var(--muted); border-style: dashed; }
+  .btn-transfer svg { display: block; flex-shrink: 0; }
+
+  .ref-field {
+    margin-top: 8px; margin-bottom: 14px; padding: 12px 14px 14px;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--teal) 8%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--teal) 42%, transparent);
+    animation: refIn .38s var(--ease); position: relative;
+  }
+  @keyframes refIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
+  .ref-field label {
+    color: var(--teal); font-size: 11.5px; font-weight: 800; letter-spacing: .01em;
+    display: flex; align-items: center; gap: 7px; margin-bottom: 8px;
+  }
+  .ref-field label svg { display: block; flex-shrink: 0; }
+  .ref-field .input-wrap input {
+    background: color-mix(in srgb, var(--teal) 5%, transparent);
+    border-color: color-mix(in srgb, var(--teal) 32%, transparent);
+    color: var(--teal); cursor: default; font-size: 16px;
+  }
+  .ref-field .input-wrap input:focus,
+  .ref-field .input-wrap input:hover {
+    border-color: color-mix(in srgb, var(--teal) 32%, transparent);
+    background: color-mix(in srgb, var(--teal) 5%, transparent);
+    box-shadow: none;
+  }
+  .ref-field .unit { color: var(--teal); opacity: .85; }
+
+  .ref-clear {
+    position: absolute; top: 10px; right: 12px; appearance: none;
+    width: 22px; height: 22px; border: 0; border-radius: 6px; background: transparent;
+    color: color-mix(in srgb, var(--teal) 65%, transparent); cursor: pointer;
+    display: grid; place-items: center; padding: 0;
+    transition: color .15s var(--ease), background .15s var(--ease);
+  }
+  .ref-clear:hover { color: var(--danger); background: color-mix(in srgb, var(--danger) 13%, transparent); }
+  .ref-clear:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+
+  @keyframes fieldFlash {
+    0% { box-shadow: 0 0 0 0 rgba(245, 165, 36, .68); }
+    100% { box-shadow: 0 0 0 14px rgba(245, 165, 36, 0); }
+  }
+  .input-wrap input.flash-update { animation: fieldFlash .95s var(--ease); }
+
+  .result-card { position: relative; }
+  .stale-note {
+    display: none; align-items: center; gap: 9px; padding: 11px 14px;
+    margin-bottom: 18px; border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--warn) 13%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warn) 38%, transparent);
+    color: var(--warn); font-size: 12.5px; font-weight: 700; line-height: 1.45;
+  }
+  .stale-note svg { display: block; flex-shrink: 0; }
+  .result-card.stale .stale-note { display: flex; }
+  .result-card.stale .result-primary,
+  .result-card.stale .mini-grid,
+  .result-card.stale .duo,
+  .result-card.stale .badge-row,
+  .result-card.stale .gauge,
+  .result-card.stale .gauge-scale { opacity: .38; filter: grayscale(.6); transition: opacity .25s var(--ease), filter .25s var(--ease); }
+  .result-card.empty .result-primary { opacity: .38; filter: grayscale(.65); }
+  .result-card.empty .mini-value,
+  .result-card.empty .badge { opacity: .55; }
+
+  .result-primary {
+    position: relative; overflow: hidden; border-radius: var(--radius); padding: 26px 24px 24px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: var(--accent-contrast); box-shadow: var(--glow-accent);
+    transition: opacity .25s var(--ease), filter .25s var(--ease);
+  }
+  .result-primary::after {
+    content: ""; position: absolute; right: -60px; top: -70px; width: 220px; height: 220px;
+    border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, .34), transparent 68%);
+    pointer-events: none;
+  }
+  .result-primary.alt { background: linear-gradient(135deg, #22c1c3, #2563eb); color: #ffffff; box-shadow: 0 14px 40px -18px rgba(37, 99, 235, .65); }
+  .rp-label { display: block; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .11em; opacity: .82; }
+  .rp-value {
+    font-family: var(--mono); font-size: clamp(40px, 6.2vw, 60px); font-weight: 800;
+    line-height: 1.04; letter-spacing: -.035em; margin: 8px 0 4px; font-variant-numeric: tabular-nums;
+  }
+  .rp-unit { font-size: 14px; font-weight: 700; opacity: .85; letter-spacing: .01em; }
+
+  .duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .duo .result-primary { padding: 22px 20px; }
+  .duo .rp-value { font-size: clamp(32px, 4.6vw, 46px); }
+
+  .mini-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 14px; }
+  .mini {
+    background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: 13px;
+    padding: 15px 16px; transition: border-color .18s var(--ease), transform .18s var(--ease);
+  }
+  .mini:hover { border-color: var(--border); transform: translateY(-2px); }
+  .mini.accent-z { background: color-mix(in srgb, var(--teal) 7%, var(--surface-2)); border-color: color-mix(in srgb, var(--teal) 28%, var(--border-soft)); }
+  .mini-label { display: block; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); line-height: 1.35; min-height: 28px; }
+  .mini.accent-z .mini-label { color: var(--teal); }
+  .mini-value { font-family: var(--mono); font-size: 23px; font-weight: 800; letter-spacing: -.03em; margin-top: 7px; color: var(--text); font-variant-numeric: tabular-nums; transition: opacity .25s var(--ease); }
+  .mini.accent-z .mini-value { color: var(--teal); }
+  .mini-unit { font-family: var(--mono); font-size: 11.5px; font-weight: 600; color: var(--muted); }
+
+  .gauge { position: relative; height: 13px; margin-top: 16px; border-radius: 999px; background: var(--surface-3); border: 1px solid var(--border-soft); overflow: hidden; transition: opacity .25s var(--ease), filter .25s var(--ease); }
+  .gauge-fill { height: 100%; width: 0; border-radius: 999px; background: var(--muted); transition: width .4s var(--ease), background .35s var(--ease); }
+  .gauge-fill.ok { background: linear-gradient(90deg, #10b981, #34d399); }
+  .gauge-fill.warn { background: linear-gradient(90deg, #f5a524, #ff8a3d); }
+  .gauge-fill.danger { background: linear-gradient(90deg, #ff8a3d, #ff4d4d); }
+  .gauge-scale { display: flex; justify-content: space-between; margin-top: 8px; font-family: var(--mono); font-size: 10.5px; font-weight: 700; color: var(--muted); transition: opacity .25s var(--ease), filter .25s var(--ease); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 9px; padding: 9px 16px;
+    border-radius: 999px; font-size: 13px; font-weight: 800; letter-spacing: -.005em;
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--muted);
+    transition: color .25s var(--ease), background .25s var(--ease), border-color .25s var(--ease), opacity .25s var(--ease);
+  }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); flex-shrink: 0; }
+  .badge.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); border-color: color-mix(in srgb, var(--ok) 34%, transparent); }
+  .badge.warn { color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); border-color: color-mix(in srgb, var(--warn) 34%, transparent); }
+  .badge.danger { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); border-color: color-mix(in srgb, var(--danger) 36%, transparent); }
+  .badge-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; transition: opacity .25s var(--ease), filter .25s var(--ease); }
+
+  .module4-msg {
+    margin: 12px 0 0; padding: 11px 14px; border-radius: var(--radius-sm);
+    font-weight: 700; font-size: 13px; line-height: 1.45; min-height: 20px;
+    background: var(--surface-2); border: 1px solid var(--border-soft); color: var(--muted);
+    transition: color .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease);
+  }
+  .module4-msg.success { background: color-mix(in srgb, var(--ok) 12%, transparent); border-color: color-mix(in srgb, var(--ok) 38%, transparent); color: var(--ok); }
+  .module4-msg.error { background: color-mix(in srgb, var(--danger) 12%, transparent); border-color: color-mix(in srgb, var(--danger) 38%, transparent); color: var(--danger); }
+  .module4-msg.info { background: color-mix(in srgb, var(--teal) 12%, transparent); border-color: color-mix(in srgb, var(--teal) 38%, transparent); color: var(--teal); }
+
+  .m4-info-list { margin: 0; padding: 0; list-style: none; }
+  .m4-info-list li { padding: 11px 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; gap: 12px; font-size: 13px; line-height: 1.5; }
+  .m4-info-list li:last-child { border-bottom: 0; }
+  .m4-info-list li span:first-child { color: var(--muted); font-weight: 600; }
+  .m4-info-list li span:last-child { font-family: var(--mono); font-weight: 700; color: var(--text); text-align: right; }
+
+  .report-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+  .btn-report {
+    appearance: none; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-family: inherit; font-size: 14px; font-weight: 800;
+    letter-spacing: -.005em; padding: 14px 22px; border-radius: var(--radius-sm);
+    cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
+    transition: transform .16s var(--ease), border-color .18s var(--ease), background .18s var(--ease), color .18s var(--ease), filter .16s var(--ease);
+  }
+  .btn-report:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+  .btn-report:active { transform: translateY(0) scale(.99); }
+  .btn-report:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .btn-report.primary { border: 0; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--accent-contrast); box-shadow: var(--glow-accent); }
+  .btn-report.primary:hover { filter: brightness(1.06); color: var(--accent-contrast); }
+  .btn-report.word { border-color: #2b579a; color: #2b579a; }
+  html[data-theme="dark"] .btn-report.word { border-color: #7cb0ff; color: #7cb0ff; }
+  .btn-report.saved { border-color: var(--ok); color: var(--ok); }
+  .btn-report svg { display: block; flex-shrink: 0; }
+
+  .report-doc {
+    background: #ffffff; color: #000000; border: 1px solid #000000;
+    padding: 44px 40px 36px; box-shadow: 0 12px 48px -14px rgba(0, 0, 0, .55);
+    font-family: 'Times New Roman', 'Liberation Serif', Georgia, serif;
+    font-size: 14px; line-height: 1.5; max-width: 900px; margin: 0 auto;
+  }
+  .doc-org-header { text-align: center; padding-bottom: 16px; margin-bottom: 26px; border-bottom: 2px solid #000000; }
+  .doc-org-name { font-size: 15px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+  .doc-org-line { font-size: 12.5px; color: #1a1a1a; line-height: 1.6; }
+  .doc-title { font-size: 15.5px; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: .08em; line-height: 1.45; margin: 26px 0 14px; color: #000000; }
+  .doc-date { text-align: center; font-size: 12.5px; color: #1a1a1a; margin-bottom: 26px; padding-bottom: 14px; border-bottom: 1px solid #000000; }
+  .report-table-wrap { margin-bottom: 26px; overflow-x: auto; }
+  .report-table { width: 100%; border-collapse: collapse; font-size: 12.5px; color: #000000; background: #ffffff; }
+  .report-table th, .report-table td { border: 1px solid #000000; padding: 5px 10px; text-align: left; vertical-align: middle; background: #ffffff; }
+  .report-table th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; background: #e8e8e8; white-space: nowrap; }
+  .report-table td.num { font-family: 'Courier New', monospace; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .report-table td.sym { font-style: italic; font-weight: 700; white-space: nowrap; width: 12%; }
+  .report-table td.unit-cell { font-size: 11.5px; color: #1a1a1a; white-space: nowrap; width: 18%; }
+  .report-table tr.section-row td { background: #d9d9d9; font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; padding: 7px 10px; color: #000000; }
+  .report-table tr.result-row td { background: #f2f2f2; font-weight: 700; }
+  .report-table tr.result-row td.num { font-weight: 800; }
+  .doc-conclusion { border: 1px solid #000000; padding: 16px 20px; margin-bottom: 30px; background: #fafafa; }
+  .doc-conclusion-title { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 12px; color: #000000; }
+  .doc-conclusion-text { margin: 0; font-size: 13px; line-height: 1.6; text-align: justify; color: #000000; }
+  .doc-signature { margin-top: 38px; padding-top: 18px; border-top: 1px solid #000000; font-size: 13px; display: flex; align-items: baseline; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .doc-sign-row { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .doc-sign-label { font-weight: 600; color: #000000; }
+  .doc-sign-name { font-weight: 700; letter-spacing: .02em; color: #000000; }
+  .doc-sign-slash { color: #000000; font-weight: 600; }
+  .doc-sign-underline { display: inline-block; min-width: 130px; height: 15px; border-bottom: 1px solid #000000; vertical-align: bottom; }
+  .doc-sign-mp { font-weight: 700; color: #000000; }
+
+  .report-empty-hint {
+    display: none; margin-top: 14px; padding: 12px 16px; border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--warn) 11%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--warn) 40%, transparent);
+    color: var(--warn); font-size: 12.5px; font-weight: 700; line-height: 1.5;
+  }
+  .report-empty-hint.visible { display: block; }
+
+  @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } .brand-sub { display: none; } }
+  @media (max-width: 860px) {
+    .header-inner { flex-wrap: wrap; padding: 12px 16px; }
+    .tabs { order: 3; width: 100%; margin-left: 0; justify-content: space-between; }
+    .tab { flex: 1; text-align: center; padding: 9px 8px; font-size: 12px; }
+    .theme-toggle { margin-left: auto; }
+    main { padding: 22px 16px 60px; }
+    .card { padding: 18px; }
+    .panel-head { flex-direction: column; align-items: flex-start; }
+    .formula-chip { width: 100%; justify-content: space-between; }
+    .report-doc { padding: 26px 20px 22px; }
+    .report-actions { flex-direction: column; }
+    .btn-report { width: 100%; justify-content: center; }
+    .doc-signature { flex-direction: column; align-items: flex-start; }
+  }
+  @media (max-width: 520px) {
+    .brand-title { font-size: 13.5px; white-space: normal; }
+    .tab { font-size: 11px; padding: 8px 4px; }
+    .mini-label { min-height: 0; }
+    .btn-transfer { font-size: 12.5px; padding: 13px 14px; }
+    .doc-title { font-size: 13.5px; }
+    .doc-org-name { font-size: 13px; }
+    .report-table { font-size: 11.5px; }
+    .report-table th, .report-table td { padding: 4px 6px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  }
+  @media print {
+    @page { margin: 14mm 12mm; size: A4 portrait; }
+    .app-header, .tabs, .tab, .theme-toggle, .btn-calc, .btn-transfer, .btn-ghost, .btn-report,
+    .report-actions, .ref-clear, .stale-note, .gauge, .gauge-scale, .badge-row,
+    .report-empty-hint, .formula-chip, .panel-head, .module4-msg { display: none !important; }
+    html, body { background: #ffffff !important; background-image: none !important; color: #000000 !important; height: auto !important; }
+    body { font-size: 11pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    main { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+    .panel { display: none !important; animation: none !important; }
+    #panel-report { display: block !important; }
+    .report-doc { background: #ffffff !important; color: #000000 !important; border: none !important; box-shadow: none !important; padding: 0 !important; max-width: none !important; margin: 0 !important; font-size: 11pt !important; }
+    .doc-org-header { border-bottom: 1.5pt solid #000000 !important; padding-bottom: 10pt !important; margin-bottom: 16pt !important; }
+    .doc-org-name { color: #000000 !important; font-size: 12pt !important; }
+    .doc-title { color: #000000 !important; font-size: 13pt !important; }
+    .report-table { border-collapse: collapse !important; width: 100% !important; font-size: 9.5pt !important; }
+    .report-table th, .report-table td { border: 1px solid #000 !important; padding: 5px !important; color: #000000 !important; font-size: 9.5pt !important; }
+    .report-table th { background: #e8e8e8 !important; font-weight: 700 !important; font-size: 8.5pt !important; }
+    .report-table tr.section-row td { background: #d9d9d9 !important; font-weight: 700 !important; }
+    * { box-shadow: none !important; text-shadow: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 21 9 3"></path><path d="M20 21 15 3"></path>
+          <path d="M12 6v2.2"></path><path d="M12 11v2.2"></path><path d="M12 16v2.2"></path>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">Дорожный инженерный дашборд</span>
+        <span class="brand-sub">Расчётный комплекс · v1.8</span>
+      </div>
+    </div>
+
+    <nav class="tabs" role="tablist" aria-label="Модули расчёта">
+      <button class="tab" id="tab-m1" role="tab" data-tab="m1" aria-selected="true" aria-controls="panel-m1" tabindex="0" type="button">Модуль 1</button>
+      <button class="tab" id="tab-m2" role="tab" data-tab="m2" aria-selected="false" aria-controls="panel-m2" tabindex="-1" type="button">Модуль 2</button>
+      <button class="tab" id="tab-m3" role="tab" data-tab="m3" aria-selected="false" aria-controls="panel-m3" tabindex="-1" type="button">Модуль 3</button>
+      <button class="tab" id="tab-m4" role="tab" data-tab="m4" aria-selected="false" aria-controls="panel-m4" tabindex="-1" type="button">Модуль 4</button>
+      <button class="tab" id="tab-report" role="tab" data-tab="report" aria-selected="false" aria-controls="panel-report" tabindex="-1" type="button">Сводный отчёт</button>
+    </nav>
+
+    <button class="theme-toggle" id="themeToggle" type="button" title="Переключить тему" aria-label="Переключить тему">
+      <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+      <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2"></path><path d="M12 20v2"></path>
+        <path d="M4.93 4.93l1.41 1.41"></path><path d="M17.66 17.66l1.41 1.41"></path>
+        <path d="M2 12h2"></path><path d="M20 12h2"></path>
+        <path d="M6.34 17.66l-1.41 1.41"></path><path d="M19.07 4.93l-1.41 1.41"></path>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ---------- МОДУЛЬ 1 ---------- -->
+  <section class="panel active" id="panel-m1" role="tabpanel" aria-labelledby="tab-m1">
+    <div class="panel-head">
+      <div>
+        <h1 class="panel-title">Пропускная способность полосы движения</h1>
+        <p class="panel-sub">Определение максимального числа автомобилей, проходящих через поперечное сечение дороги за один час.</p>
+      </div>
+      <div class="formula-chip"><span class="formula-label">Формула</span><code>P = 3600 / t · K</code></div>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <div class="card-head"><h2>Исходные данные</h2><button class="btn-ghost" type="button" data-reset="m1">Сбросить</button></div>
+        <div class="field">
+          <label for="m1-t">Средний интервал следования <span class="sym">t</span></label>
+          <div class="input-wrap"><input type="number" id="m1-t" step="0.1" min="0" inputmode="decimal" autocomplete="off" placeholder="1.8" data-module="m1"><span class="unit">с</span></div>
+          <p class="field-msg" id="m1-t-msg"></p>
+        </div>
+        <div class="field">
+          <label for="m1-K">Коэффициент условий движения <span class="sym">K</span></label>
+          <div class="input-wrap"><input type="number" id="m1-K" step="0.01" min="0" inputmode="decimal" autocomplete="off" placeholder="0.85" data-module="m1"><span class="unit">—</span></div>
+          <p class="field-msg" id="m1-K-msg"></p>
+        </div>
+        <p class="card-note">Коэффициент <strong>K</strong> учитывает дорожные условия. Рекомендуемый диапазон — <strong>0.7–1.0</strong>.</p>
+        <button class="btn-calc" type="button" data-calc="m1">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+            <line x1="8" y1="6" x2="16" y2="6"></line>
+            <line x1="8" y1="11" x2="8" y2="11.01"></line>
+            <line x1="12" y1="11" x2="12" y2="11.01"></line>
+            <line x1="16" y1="11" x2="16" y2="11.01"></line>
+            <line x1="8" y1="16" x2="8" y2="16.01"></line>
+            <line x1="12" y1="16" x2="12" y2="16.01"></line>
+            <line x1="16" y1="16" x2="16" y2="16.01"></line>
+          </svg>
+          Рассчитать пропускную способность
+        </button>
+      </div>
+
+      <div class="card result-card empty" id="m1-result-card">
+        <div class="card-head"><h2>Результат расчёта</h2></div>
+        <div class="stale-note" role="status">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          Исходные данные изменены — нажмите «Рассчитать».
+        </div>
+        <div class="result-primary">
+          <span class="rp-label">Пропускная способность</span>
+          <div class="rp-value" id="m1-P" aria-live="polite">—</div>
+          <span class="rp-unit">авто / час</span>
+        </div>
+        <div class="mini-grid">
+          <div class="mini"><span class="mini-label">Теоретический максимум P₀</span><div class="mini-value" id="m1-P0">—</div><span class="mini-unit">авто / час</span></div>
+          <div class="mini"><span class="mini-label">Интервал следования t</span><div class="mini-value" id="m1-tout">—</div><span class="mini-unit">с</span></div>
+          <div class="mini"><span class="mini-label">Коэффициент K</span><div class="mini-value" id="m1-Kout">—</div><span class="mini-unit">безразмерный</span></div>
+        </div>
+        <button class="btn-transfer" type="button" id="btn-m1-to-m2" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="12" x2="19" y2="12"></line><polyline points="13 6 19 12 13 18"></polyline>
+          </svg>
+          Передать [Пропускную способность] в Модуль 2
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- МОДУЛЬ 2 ---------- -->
+  <section class="panel" id="panel-m2" role="tabpanel" aria-labelledby="tab-m2">
+    <div class="panel-head">
+      <div>
+        <h1 class="panel-title">Коэффициент загрузки дороги</h1>
+        <p class="panel-sub">Оценка уровня загрузки участка: отношение фактической интенсивности к пропускной способности.</p>
+      </div>
+      <div class="formula-chip"><span class="formula-label">Формула</span><code>Z = N / P</code></div>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <div class="card-head"><h2>Исходные данные</h2><button class="btn-ghost" type="button" data-reset="m2">Сбросить</button></div>
+        <div class="field">
+          <label for="m2-N">Фактическая интенсивность движения <span class="sym">N</span></label>
+          <div class="input-wrap"><input type="number" id="m2-N" step="10" min="0" inputmode="decimal" autocomplete="off" placeholder="1200" data-module="m2"><span class="unit">авто/ч</span></div>
+          <p class="field-msg" id="m2-N-msg"></p>
+        </div>
+        <div class="field">
+          <label for="m2-P">Пропускная способность <span class="sym">P</span></label>
+          <div class="input-wrap"><input type="number" id="m2-P" step="10" min="0" inputmode="decimal" autocomplete="off" placeholder="1800" data-module="m2"><span class="unit">авто/ч</span></div>
+          <p class="field-msg" id="m2-P-msg"></p>
+        </div>
+        <div class="field ref-field" id="m2-ref-field" hidden>
+          <label for="m2-ref-T">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14"></path><polyline points="5 12 12 19 19 12"></polyline>
+            </svg>
+            Получено из Модуля 3: Время оборота T
+          </label>
+          <div class="input-wrap"><input type="text" id="m2-ref-T" readonly placeholder="—" tabindex="-1"><span class="unit">мин</span></div>
+          <button class="ref-clear" type="button" id="m2-ref-T-clear" title="Очистить" aria-label="Очистить">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <p class="card-note">Значение <strong>P</strong> можно получить в Модуле 1. Значение <strong>T</strong> — в Модуле 3.</p>
+        <button class="btn-calc" type="button" data-calc="m2">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+            <line x1="8" y1="6" x2="16" y2="6"></line>
+            <line x1="8" y1="11" x2="8" y2="11.01"></line>
+            <line x1="12" y1="11" x2="12" y2="11.01"></line>
+            <line x1="16" y1="11" x2="16" y2="11.01"></line>
+            <line x1="8" y1="16" x2="8" y2="16.01"></line>
+            <line x1="12" y1="16" x2="12" y2="16.01"></line>
+            <line x1="16" y1="16" x2="16" y2="16.01"></line>
+          </svg>
+          Рассчитать коэффициент загрузки
+        </button>
+      </div>
+
+      <div class="card result-card empty" id="m2-result-card">
+        <div class="card-head"><h2>Результат расчёта</h2></div>
+        <div class="stale-note" role="status">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          Исходные данные изменены — нажмите «Рассчитать».
+        </div>
+        <div class="result-primary">
+          <span class="rp-label">Коэффициент загрузки</span>
+          <div class="rp-value" id="m2-Z" aria-live="polite">—</div>
+          <span class="rp-unit">безразмерная величина</span>
+        </div>
+        <div class="badge-row"><span class="badge" id="m2-badge"><span class="dot"></span>Ожидание данных</span></div>
+        <div class="gauge" role="img" aria-label="Шкала загрузки"><div class="gauge-fill" id="m2-gauge"></div></div>
+        <div class="gauge-scale"><span>0.0</span><span>0.5</span><span>0.7</span><span>0.9</span><span>1.0</span></div>
+        <div class="mini-grid">
+          <div class="mini"><span class="mini-label">Интенсивность N</span><div class="mini-value" id="m2-Nout">—</div><span class="mini-unit">авто / час</span></div>
+          <div class="mini"><span class="mini-label">Пропускная способность P</span><div class="mini-value" id="m2-Pout">—</div><span class="mini-unit">авто / час</span></div>
+          <div class="mini"><span class="mini-label">Резерв пропускной способности</span><div class="mini-value" id="m2-reserve">—</div><span class="mini-unit">авто / час</span></div>
+        </div>
+        <button class="btn-transfer" type="button" id="btn-m2-to-m3" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="12" x2="19" y2="12"></line><polyline points="13 6 19 12 13 18"></polyline>
+          </svg>
+          Передать [Коэффициент загрузки] в Модуль 3
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- МОДУЛЬ 3 ---------- -->
+  <section class="panel" id="panel-m3" role="tabpanel" aria-labelledby="tab-m3">
+    <div class="panel-head">
+      <div>
+        <h1 class="panel-title">Интервал движения автобусов</h1>
+        <p class="panel-sub">Расчёт времени оборота автобуса на маршруте и интервала движения.</p>
+      </div>
+      <div class="formula-chip"><span class="formula-label">Формула</span><code>T = 2L / V · 60 · <span class="z-part">(1 + Z)</span>; I = T / N</code></div>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <div class="card-head"><h2>Исходные данные</h2><button class="btn-ghost" type="button" data-reset="m3">Сбросить</button></div>
+        <div class="field">
+          <label for="m3-L">Длина маршрута в одну сторону <span class="sym">L</span></label>
+          <div class="input-wrap"><input type="number" id="m3-L" step="0.1" min="0" inputmode="decimal" autocomplete="off" placeholder="12.5" data-module="m3"><span class="unit">км</span></div>
+          <p class="field-msg" id="m3-L-msg"></p>
+        </div>
+        <div class="field">
+          <label for="m3-V">Скорость сообщения <span class="sym">V</span></label>
+          <div class="input-wrap"><input type="number" id="m3-V" step="1" min="0" inputmode="decimal" autocomplete="off" placeholder="22" data-module="m3"><span class="unit">км/ч</span></div>
+          <p class="field-msg" id="m3-V-msg"></p>
+        </div>
+        <div class="field">
+          <label for="m3-N">Количество автобусов на маршруте <span class="sym">N</span></label>
+          <div class="input-wrap"><input type="number" id="m3-N" step="1" min="0" inputmode="numeric" autocomplete="off" placeholder="6" data-module="m3"><span class="unit">шт.</span></div>
+          <p class="field-msg" id="m3-N-msg"></p>
+        </div>
+        <div class="field ref-field" id="m3-ref-field" hidden>
+          <label for="m3-ref-Z">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14"></path><polyline points="5 12 12 19 19 12"></polyline>
+            </svg>
+            Получено из Модуля 2: Коэффициент загрузки Z
+          </label>
+          <div class="input-wrap"><input type="text" id="m3-ref-Z" readonly placeholder="—" tabindex="-1"><span class="unit">—</span></div>
+          <button class="ref-clear" type="button" id="m3-ref-Z-clear" title="Очистить" aria-label="Очистить">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <p class="card-note"><strong>T</strong> учитывает движение в прямом и обратном направлениях (множитель 2). <strong>Z</strong> увеличивает время оборота.</p>
+        <button class="btn-calc" type="button" data-calc="m3">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+            <line x1="8" y1="6" x2="16" y2="6"></line>
+            <line x1="8" y1="11" x2="8" y2="11.01"></line>
+            <line x1="12" y1="11" x2="12" y2="11.01"></line>
+            <line x1="16" y1="11" x2="16" y2="11.01"></line>
+            <line x1="8" y1="16" x2="8" y2="16.01"></line>
+            <line x1="12" y1="16" x2="12" y2="16.01"></line>
+            <line x1="16" y1="16" x2="16" y2="16.01"></line>
+          </svg>
+          Рассчитать интервал движения
+        </button>
+      </div>
+
+      <div class="card result-card empty" id="m3-result-card">
+        <div class="card-head"><h2>Результат расчёта</h2></div>
+        <div class="stale-note" role="status">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          Исходные данные изменены — нажмите «Рассчитать».
+        </div>
+        <div class="duo">
+          <div class="result-primary"><span class="rp-label">Время оборота T</span><div class="rp-value" id="m3-T" aria-live="polite">—</div><span class="rp-unit">мин</span></div>
+          <div class="result-primary alt"><span class="rp-label">Интервал движения I</span><div class="rp-value" id="m3-I" aria-live="polite">—</div><span class="rp-unit">мин</span></div>
+        </div>
+        <div class="mini-grid">
+          <div class="mini"><span class="mini-label">Время рейса в одну сторону</span><div class="mini-value" id="m3-trip">—</div><span class="mini-unit">мин</span></div>
+          <div class="mini accent-z"><span class="mini-label">Коэффициент загрузки Z (из Модуля 2)</span><div class="mini-value" id="m3-Zout">—</div><span class="mini-unit">безразмерный</span></div>
+          <div class="mini"><span class="mini-label">Длина маршрута L</span><div class="mini-value" id="m3-Lout">—</div><span class="mini-unit">км</span></div>
+          <div class="mini"><span class="mini-label">Скорость сообщения V</span><div class="mini-value" id="m3-Vout">—</div><span class="mini-unit">км / ч</span></div>
+          <div class="mini"><span class="mini-label">Автобусов на маршруте N</span><div class="mini-value" id="m3-Nout">—</div><span class="mini-unit">шт.</span></div>
+        </div>
+        <button class="btn-transfer" type="button" id="btn-m3-to-m2" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="12" x2="19" y2="12"></line><polyline points="13 6 19 12 13 18"></polyline>
+          </svg>
+          Передать [Время оборота] в Модуль 2
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- МОДУЛЬ 4 — ВАРИАНТ 13 «РАБОТА ТЕХНИКИ» ---------- -->
+  <section class="panel" id="panel-m4" role="tabpanel" aria-labelledby="tab-m4">
+    <div class="panel-head">
+      <div>
+        <h1 class="panel-title">Модуль 4: Работа техники</h1>
+        <p class="panel-sub">Учёт фактов работы строительной техники на участках. Каждая запись сохраняется в Google-таблицу (лист «Журнал»).</p>
+      </div>
+      <div class="formula-chip"><span class="formula-label">Вариант 13</span><code>Работа техники</code></div>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <div class="card-head"><h2>Новая запись</h2></div>
+        <form id="module4Form" novalidate>
+          <div class="field">
+            <label for="m4-date">Дата <span style="color:var(--danger)">*</span></label>
+            <div class="input-wrap no-unit"><input type="date" id="m4-date" name="Дата" required></div>
+            <p class="field-msg" id="m4-date-msg"></p>
+          </div>
+          <div class="field">
+            <label for="m4-equipment">Вид техники <span style="color:var(--danger)">*</span></label>
+            <div class="input-wrap no-unit"><input type="text" id="m4-equipment" name="Вид техники" required autocomplete="off" placeholder="Экскаватор / Бульдозер / Каток…"></div>
+            <p class="field-msg" id="m4-equipment-msg"></p>
+          </div>
+          <div class="field">
+            <label for="m4-hours">Часы работы <span class="sym">t</span> <span style="color:var(--danger)">*</span></label>
+            <div class="input-wrap"><input type="number" id="m4-hours" name="Часы" min="0.01" step="0.01" inputmode="decimal" required autocomplete="off" placeholder="8.00"><span class="unit">ч</span></div>
+            <p class="field-msg" id="m4-hours-msg">Правило: часы &gt; 0</p>
+          </div>
+          <div class="field">
+            <label for="m4-section">Участок <span style="color:var(--danger)">*</span></label>
+            <div class="input-wrap no-unit"><input type="text" id="m4-section" name="Участок" required autocomplete="off" placeholder="ПК 10+00 / Захватка №3"></div>
+            <p class="field-msg" id="m4-section-msg"></p>
+          </div>
+          <button class="btn-calc" type="submit" id="m4-submit">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            Сохранить в таблицу
+          </button>
+          <p id="module4Message" class="module4-msg">Заполните форму и нажмите «Сохранить»</p>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Информация о модуле</h2></div>
+        <div class="mini-grid" style="margin-top:0;">
+          <div class="mini"><span class="mini-label">Вариант</span><div class="mini-value">13</div><span class="mini-unit">из 30</span></div>
+          <div class="mini"><span class="mini-label">Правило проверки</span><div class="mini-value" style="font-size:16px;">Часы &gt; 0</div><span class="mini-unit">валидация</span></div>
+        </div>
+        <ul class="m4-info-list" style="margin-top:16px;">
+          <li><span>Название модуля</span><span>Работа техники</span></li>
+          <li><span>Поля формы</span><span>4</span></li>
+          <li><span>Куда сохраняется</span><span>Google Sheets</span></li>
+          <li><span>Лист</span><span>«Журнал»</span></li>
+          <li><span>Способ отправки</span><span>Apps Script</span></li>
+        </ul>
+        <p class="card-note">После нажатия «Сохранить» данные отправляются POST-запросом на опубликованный URL Apps Script. Скрипт добавляет новую строку в лист «Журнал».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- СВОДНЫЙ ОТЧЁТ ---------- -->
+  <section class="panel" id="panel-report" role="tabpanel" aria-labelledby="tab-report">
+    <div class="panel-head">
+      <div>
+        <h1 class="panel-title">Сводный отчёт по проекту</h1>
+        <p class="panel-sub">Обобщённые результаты всех трёх расчётных модулей в едином инженерном документе.</p>
+      </div>
+      <div class="formula-chip"><span class="formula-label">Сформирован</span><code id="report-date">—</code></div>
+    </div>
+
+    <div class="report-actions">
+      <button class="btn-report primary" type="button" data-report-action="refresh">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+          <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        Сформировать отчёт
+      </button>
+      <button class="btn-report word" type="button" data-report-action="word">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="8" y1="13" x2="16" y2="13"></line>
+          <line x1="8" y1="17" x2="16" y2="17"></line>
+          <line x1="8" y1="9" x2="10" y2="9"></line>
+        </svg>
+        Скачать отчёт в Word
+      </button>
+      <button class="btn-report" type="button" data-report-action="save" id="btn-save-project">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        <span id="btn-save-project-label">Сохранить проект</span>
+      </button>
+      <button class="btn-report" type="button" data-report-action="print">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        Печать / Экспорт в PDF
+      </button>
+    </div>
+
+    <div class="report-doc" id="report-doc">
+      <div class="doc-org-header">
+        <div class="doc-org-name">А.О Ростовавтомост</div>
+        <div class="doc-org-line">Объект: полигон</div>
+        <div class="doc-org-line">Шифр: сооружение автодорожного моста 153 ПД 49809517</div>
+      </div>
+      <h2 class="doc-title">Технический отчёт<br>по результатам инженерных расчётов</h2>
+      <div class="doc-date">Дата составления: <span id="rep-meta-date">—</span> &nbsp;·&nbsp; Состояние модулей: <span id="rep-meta-status">—</span></div>
+
+      <div class="report-table-wrap">
+        <table class="report-table">
+          <thead><tr><th style="width:40%">Параметр</th><th style="width:12%">Обозн.</th><th style="width:30%; text-align:right">Значение</th><th style="width:18%">Ед. изм.</th></tr></thead>
+          <tbody>
+            <tr class="section-row"><td colspan="4">Модуль 1 · Пропускная способность полосы движения</td></tr>
+            <tr><td>Средний интервал следования</td><td class="sym">t</td><td class="num" id="rep-m1-t">—</td><td class="unit-cell">с</td></tr>
+            <tr><td>Коэффициент условий движения</td><td class="sym">K</td><td class="num" id="rep-m1-K">—</td><td class="unit-cell">—</td></tr>
+            <tr><td>Теоретический максимум</td><td class="sym">P₀</td><td class="num" id="rep-m1-P0">—</td><td class="unit-cell">авто / час</td></tr>
+            <tr class="result-row"><td>Пропускная способность</td><td class="sym">P</td><td class="num" id="rep-m1-P">—</td><td class="unit-cell">авто / час</td></tr>
+
+            <tr class="section-row"><td colspan="4">Модуль 2 · Коэффициент загрузки дороги</td></tr>
+            <tr><td>Фактическая интенсивность движения</td><td class="sym">N</td><td class="num" id="rep-m2-N">—</td><td class="unit-cell">авто / час</td></tr>
+            <tr><td>Пропускная способность (расчётная)</td><td class="sym">P</td><td class="num" id="rep-m2-P">—</td><td class="unit-cell">авто / час</td></tr>
+            <tr><td>Резерв пропускной способности</td><td class="sym">ΔP</td><td class="num" id="rep-m2-reserve">—</td><td class="unit-cell">авто / час</td></tr>
+            <tr class="result-row"><td>Коэффициент загрузки</td><td class="sym">Z</td><td class="num" id="rep-m2-Z">—</td><td class="unit-cell">безразмерный</td></tr>
+
+            <tr class="section-row"><td colspan="4">Модуль 3 · Интервал движения автобусов</td></tr>
+            <tr><td>Длина маршрута (в одну сторону)</td><td class="sym">L</td><td class="num" id="rep-m3-L">—</td><td class="unit-cell">км</td></tr>
+            <tr><td>Скорость сообщения</td><td class="sym">V</td><td class="num" id="rep-m3-V">—</td><td class="unit-cell">км / ч</td></tr>
+            <tr><td>Количество автобусов на маршруте</td><td class="sym">N</td><td class="num" id="rep-m3-N">—</td><td class="unit-cell">шт.</td></tr>
+            <tr><td>Коэффициент загрузки (из Модуля 2)</td><td class="sym">Z</td><td class="num" id="rep-m3-Z">—</td><td class="unit-cell">безразмерный</td></tr>
+            <tr><td>Время рейса в одну сторону</td><td class="sym">t</td><td class="num" id="rep-m3-trip">—</td><td class="unit-cell">мин</td></tr>
+            <tr class="result-row"><td>Время оборота</td><td class="sym">T</td><td class="num" id="rep-m3-T">—</td><td class="unit-cell">мин</td></tr>
+            <tr class="result-row"><td>Интервал движения</td><td class="sym">I</td><td class="num" id="rep-m3-I">—</td><td class="unit-cell">мин</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="report-empty-hint" id="report-empty-hint">Не все модули рассчитаны. Данные, отмеченные «—», появятся после нажатия кнопок «Рассчитать» в соответствующих модулях.</div>
+
+      <div class="doc-conclusion">
+        <h3 class="doc-conclusion-title">Заключение инженера ПТО</h3>
+        <p class="doc-conclusion-text">Параметры объекта соответствуют нормативным требованиям. Объект допущен к производству строительно-монтажных работ.</p>
+      </div>
+
+      <div class="doc-signature">
+        <div class="doc-sign-row">
+          <span class="doc-sign-label">Инженер ПТО</span>
+          <span class="doc-sign-name">Зорин.М.Д</span>
+          <span class="doc-sign-slash">/</span>
+          <span class="doc-sign-underline"></span>
+          <span class="doc-sign-slash">/</span>
+          <span class="doc-sign-mp">М.П.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================
+     ОСНОВНОЙ СКРИПТ ДАШБОРДА
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'road-engineering-dashboard-v8';
+  var root = document.documentElement;
+  var activeTab = 'm1';
+
+  var state = {
+    theme: 'dark',
+    tab: 'm1',
+    lastSaved: null,
+    m1: { inputs: { 'm1-t': '', 'm1-K': '' }, result: null, stale: false },
+    m2: { inputs: { 'm2-N': '', 'm2-P': '' }, result: null, stale: false, receivedT: null },
+    m3: { inputs: { 'm3-L': '', 'm3-V': '', 'm3-N': '' }, result: null, stale: false, receivedZ: null }
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function setText(id, value) { var el = $(id); if (el) el.textContent = value; }
+
+  function fmt(n, digits) {
+    if (n === null || n === undefined || !isFinite(n)) return '—';
+    var d;
+    if (typeof digits === 'number') d = digits;
+    else {
+      var a = Math.abs(n);
+      if (a >= 1000) d = 0;
+      else if (a >= 100) d = 1;
+      else d = 2;
+    }
+    return n.toLocaleString('ru-RU', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+
+  function nowStr() {
+    var d = new Date();
+    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' +
+           d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function onlyDateStr() {
+    return new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function moduleOfInput(id) {
+    if (id.indexOf('m1-') === 0) return 'm1';
+    if (id.indexOf('m2-') === 0) return 'm2';
+    if (id.indexOf('m3-') === 0) return 'm3';
+    return null;
+  }
+
+  function flashField(el) {
+    if (!el) return;
+    el.classList.remove('flash-update');
+    void el.offsetWidth;
+    el.classList.add('flash-update');
+    setTimeout(function () { el.classList.remove('flash-update'); }, 1050);
+  }
+
+  function checkField(id, opts) {
+    opts = opts || {};
+    var el = $(id);
+    if (!el) return { ok: false, value: null, error: 'Поле не найдено', warn: null };
+    var raw = String(el.value === null || el.value === undefined ? '' : el.value).trim().replace(',', '.');
+    if (raw === '') return { ok: false, value: null, error: 'Заполните поле', warn: null };
+    var num = Number(raw);
+    if (!isFinite(num)) return { ok: false, value: null, error: 'Введите корректное число', warn: null };
+    if (num < 0) return { ok: false, value: null, error: 'Отрицательные значения недопустимы', warn: null };
+    if (opts.gt !== undefined && num <= opts.gt) return { ok: false, value: null, error: 'Значение должно быть больше ' + opts.gt, warn: null };
+    var warn = null;
+    if (opts.softMin !== undefined && num < opts.softMin) warn = 'Ниже рекомендуемого диапазона ' + opts.softMin + '–' + opts.softMax;
+    else if (opts.softMax !== undefined && num > opts.softMax) warn = 'Выше рекомендуемого диапазона ' + opts.softMin + '–' + opts.softMax;
+    return { ok: true, value: num, error: null, warn: warn };
+  }
+
+  function applyFieldState(id, res) {
+    var el = $(id), msgEl = $(id + '-msg');
+    if (!el) return;
+    el.classList.remove('invalid');
+    el.removeAttribute('aria-invalid');
+    if (msgEl) { msgEl.textContent = ''; msgEl.className = 'field-msg'; }
+    if (!res) return;
+    if (!res.ok) {
+      el.classList.add('invalid');
+      el.setAttribute('aria-invalid', 'true');
+      if (msgEl) { msgEl.textContent = res.error || 'Некорректное значение'; msgEl.className = 'field-msg error'; }
+    } else if (res.warn) {
+      if (msgEl) { msgEl.textContent = res.warn; msgEl.className = 'field-msg warn'; }
+    }
+  }
+
+  function clearModuleFieldStates(mod) {
+    var panel = $('panel-' + mod);
+    if (!panel) return;
+    Array.prototype.forEach.call(panel.querySelectorAll('input[type="number"]'), function (inp) {
+      applyFieldState(inp.id, null);
+    });
+  }
+
+  function renderM1() {
+    var s = state.m1, r = s.result, card = $('m1-result-card');
+    if (!r) { setText('m1-P', '—'); setText('m1-P0', '—'); setText('m1-tout', '—'); setText('m1-Kout', '—'); }
+    else { setText('m1-P', fmt(r.P, 0)); setText('m1-P0', fmt(r.P0, 0)); setText('m1-tout', fmt(r.t, 2)); setText('m1-Kout', fmt(r.K, 2)); }
+    if (card) { card.classList.toggle('stale', !!r && s.stale); card.classList.toggle('empty', !r); }
+    var btn = $('btn-m1-to-m2'); if (btn) btn.disabled = !r;
+  }
+
+  function renderM2() {
+    var s = state.m2, r = s.result, card = $('m2-result-card');
+    var badge = $('m2-badge'), fill = $('m2-gauge');
+    if (!r) {
+      setText('m2-Z', '—'); setText('m2-Nout', '—'); setText('m2-Pout', '—'); setText('m2-reserve', '—');
+      if (badge) { badge.className = 'badge'; badge.innerHTML = '<span class="dot"></span>Ожидание данных'; }
+      if (fill) { fill.className = 'gauge-fill'; fill.style.width = '0%'; }
+    } else {
+      setText('m2-Z', fmt(r.Z, 2)); setText('m2-Nout', fmt(r.N, 0));
+      setText('m2-Pout', fmt(r.P, 0)); setText('m2-reserve', fmt(r.P - r.N, 0));
+      var pct = Math.min(Math.max(r.Z, 0), 1) * 100;
+      if (fill) fill.style.width = pct + '%';
+      var label, cls;
+      if (r.Z <= 0.5) { label = 'Свободное движение'; cls = 'ok'; }
+      else if (r.Z <= 0.7) { label = 'Устойчивое движение'; cls = 'ok'; }
+      else if (r.Z <= 0.9) { label = 'Загруженное движение'; cls = 'warn'; }
+      else if (r.Z <= 1.0) { label = 'Предельная загрузка'; cls = 'warn'; }
+      else { label = 'Перегрузка — затор'; cls = 'danger'; }
+      if (badge) { badge.className = 'badge ' + cls; badge.innerHTML = '<span class="dot"></span>' + label; }
+      if (fill) fill.className = 'gauge-fill ' + cls;
+    }
+    if (card) { card.classList.toggle('stale', !!r && s.stale); card.classList.toggle('empty', !r); }
+    var btnM2M3 = $('btn-m2-to-m3'); if (btnM2M3) btnM2M3.disabled = !r;
+    renderM2Received();
+  }
+
+  function renderM2Received() {
+    var field = $('m2-ref-field'), input = $('m2-ref-T');
+    if (!field || !input) return;
+    var t = state.m2.receivedT;
+    if (t === null || t === undefined || !isFinite(t)) { field.hidden = true; input.value = ''; }
+    else { field.hidden = false; input.value = fmt(t, 1); }
+  }
+
+  function renderM3() {
+    var s = state.m3, r = s.result, card = $('m3-result-card');
+    if (!r) {
+      setText('m3-T', '—'); setText('m3-I', '—'); setText('m3-trip', '—'); setText('m3-Zout', '—');
+      setText('m3-Lout', '—'); setText('m3-Vout', '—'); setText('m3-Nout', '—');
+    } else {
+      setText('m3-T', fmt(r.T, 1)); setText('m3-I', fmt(r.I, 1));
+      setText('m3-trip', fmt(r.trip, 1)); setText('m3-Lout', fmt(r.L, 1));
+      setText('m3-Vout', fmt(r.V, 1)); setText('m3-Nout', fmt(r.N, 0));
+      if (r.ZApplied !== undefined && r.ZApplied !== null && isFinite(r.ZApplied)) setText('m3-Zout', fmt(r.ZApplied, 2));
+      else setText('m3-Zout', '0.00');
+    }
+    if (card) { card.classList.toggle('stale', !!r && s.stale); card.classList.toggle('empty', !r); }
+    var btn = $('btn-m3-to-m2'); if (btn) btn.disabled = !r;
+    renderM3Received();
+  }
+
+  function renderM3Received() {
+    var field = $('m3-ref-field'), input = $('m3-ref-Z');
+    if (!field || !input) return;
+    var z = state.m3.receivedZ;
+    if (z === null || z === undefined || !isFinite(z)) { field.hidden = true; input.value = ''; }
+    else { field.hidden = false; input.value = fmt(z, 2); }
+  }
+
+  function renderReport() {
+    var m1 = state.m1.result, m2 = state.m2.result, m3 = state.m3.result;
+    if (m1) { setText('rep-m1-t', fmt(m1.t, 2)); setText('rep-m1-K', fmt(m1.K, 2)); setText('rep-m1-P0', fmt(m1.P0, 0)); setText('rep-m1-P', fmt(m1.P, 0)); }
+    else { setText('rep-m1-t', '—'); setText('rep-m1-K', '—'); setText('rep-m1-P0', '—'); setText('rep-m1-P', '—'); }
+    if (m2) { setText('rep-m2-N', fmt(m2.N, 0)); setText('rep-m2-P', fmt(m2.P, 0)); setText('rep-m2-reserve', fmt(m2.P - m2.N, 0)); setText('rep-m2-Z', fmt(m2.Z, 2)); }
+    else { setText('rep-m2-N', '—'); setText('rep-m2-P', '—'); setText('rep-m2-reserve', '—'); setText('rep-m2-Z', '—'); }
+    if (m3) {
+      setText('rep-m3-L', fmt(m3.L, 1)); setText('rep-m3-V', fmt(m3.V, 1)); setText('rep-m3-N', fmt(m3.N, 0));
+      setText('rep-m3-Z', (m3.ZApplied !== undefined && m3.ZApplied !== null && isFinite(m3.ZApplied)) ? fmt(m3.ZApplied, 2) : '0.00');
+      setText('rep-m3-trip', fmt(m3.trip, 1)); setText('rep-m3-T', fmt(m3.T, 1)); setText('rep-m3-I', fmt(m3.I, 1));
+    } else {
+      setText('rep-m3-L', '—'); setText('rep-m3-V', '—'); setText('rep-m3-N', '—');
+      setText('rep-m3-Z', '—'); setText('rep-m3-trip', '—'); setText('rep-m3-T', '—'); setText('rep-m3-I', '—');
+    }
+    setText('report-date', nowStr());
+    setText('rep-meta-date', onlyDateStr());
+    var calculated = (m1 ? 1 : 0) + (m2 ? 1 : 0) + (m3 ? 1 : 0);
+    var staleCount = 0;
+    if (state.m1.stale && m1) staleCount++;
+    if (state.m2.stale && m2) staleCount++;
+    if (state.m3.stale && m3) staleCount++;
+    var statusStr = calculated + ' из 3 модулей';
+    if (staleCount > 0) statusStr += ' · ' + staleCount + ' устарев.';
+    setText('rep-meta-status', statusStr);
+    var hint = $('report-empty-hint');
+    if (hint) hint.classList.toggle('visible', calculated < 3);
+  }
+
+  function render(mod) {
+    if (mod === 'm1') renderM1();
+    else if (mod === 'm2') renderM2();
+    else if (mod === 'm3') renderM3();
+    else if (mod === 'report') renderReport();
+  }
+
+  function renderAll() { renderM1(); renderM2(); renderM3(); renderReport(); }
+
+  function calculateM1() {
+    var t = checkField('m1-t', { gt: 0 });
+    var K = checkField('m1-K', { gt: 0, softMin: 0.7, softMax: 1.0 });
+    applyFieldState('m1-t', t); applyFieldState('m1-K', K);
+    if (!t.ok || !K.ok) { persist(); return; }
+    var P0 = 3600 / t.value, P = P0 * K.value;
+    state.m1.result = { P: P, P0: P0, t: t.value, K: K.value };
+    state.m1.stale = false;
+    renderM1(); renderReport(); persist();
+  }
+
+  function calculateM2() {
+    var N = checkField('m2-N', { gt: 0 });
+    var P = checkField('m2-P', { gt: 0 });
+    applyFieldState('m2-N', N); applyFieldState('m2-P', P);
+    if (!N.ok || !P.ok) { persist(); return; }
+    state.m2.result = { N: N.value, P: P.value, Z: N.value / P.value };
+    state.m2.stale = false;
+    renderM2(); renderReport(); persist();
+  }
+
+  function calculateM3() {
+    var L = checkField('m3-L', { gt: 0 });
+    var V = checkField('m3-V', { gt: 0 });
+    var N = checkField('m3-N', { gt: 0 });
+    applyFieldState('m3-L', L); applyFieldState('m3-V', V); applyFieldState('m3-N', N);
+    if (!L.ok || !V.ok || !N.ok) { persist(); return; }
+    var Z = (typeof state.m3.receivedZ === 'number' && isFinite(state.m3.receivedZ)) ? state.m3.receivedZ : 0;
+    var trip = (L.value / V.value) * 60;
+    var T = trip * 2 * (1 + Z);
+    var I = T / N.value;
+    state.m3.result = { L: L.value, V: V.value, N: N.value, trip: trip, T: T, I: I, ZApplied: Z };
+    state.m3.stale = false;
+    renderM3(); renderReport(); persist();
+  }
+
+  function calculate(mod) {
+    if (mod === 'm1') calculateM1();
+    else if (mod === 'm2') calculateM2();
+    else if (mod === 'm3') calculateM3();
+  }
+
+  function transferM1toM2() {
+    if (!state.m1.result) return;
+    var pValue = state.m1.result.P;
+    var pField = $('m2-P'); if (!pField) return;
+    var strValue = String(Math.round(pValue * 1000) / 1000);
+    pField.value = strValue;
+    state.m2.inputs['m2-P'] = strValue;
+    applyFieldState('m2-P', null);
+    setTab('m2'); calculate('m2'); flashField(pField);
+    var nField = $('m2-N'); if (nField && !nField.value) setTimeout(function () { nField.focus(); }, 200);
+    persist();
+  }
+
+  function transferM3toM2() {
+    if (!state.m3.result) return;
+    state.m2.receivedT = state.m3.result.T;
+    renderM2Received();
+    setTab('m2');
+    var nRes = checkField('m2-N', { gt: 0 });
+    var pRes = checkField('m2-P', { gt: 0 });
+    if (nRes.ok && pRes.ok) calculate('m2'); else renderM2();
+    var refInput = $('m2-ref-T'); if (refInput) flashField(refInput);
+    persist();
+  }
+
+  function transferM2toM3() {
+    if (!state.m2.result) return;
+    state.m3.receivedZ = state.m2.result.Z;
+    renderM3Received();
+    setTab('m3');
+    var lRes = checkField('m3-L', { gt: 0 });
+    var vRes = checkField('m3-V', { gt: 0 });
+    var nRes = checkField('m3-N', { gt: 0 });
+    if (lRes.ok && vRes.ok && nRes.ok) calculate('m3'); else renderM3();
+    var refInput = $('m3-ref-Z'); if (refInput) flashField(refInput);
+    persist();
+  }
+
+  var tabButtons = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+
+  function setTab(name, save) {
+    if (save === undefined) save = true;
+    var exists = tabButtons.some(function (b) { return b.dataset.tab === name; });
+    if (!exists) name = 'm1';
+    activeTab = name; state.tab = name;
+    tabButtons.forEach(function (btn) {
+      var on = btn.dataset.tab === name;
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      btn.tabIndex = on ? 0 : -1;
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.panel'), function (p) {
+      p.classList.toggle('active', p.id === 'panel-' + name);
+    });
+    if (name === 'report') renderReport();
+    if (save) persist();
+  }
+
+  tabButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () { setTab(btn.dataset.tab); });
+    btn.addEventListener('keydown', function (e) {
+      var idx = tabButtons.indexOf(btn), next = null;
+      if (e.key === 'ArrowRight') next = tabButtons[(idx + 1) % tabButtons.length];
+      else if (e.key === 'ArrowLeft') next = tabButtons[(idx - 1 + tabButtons.length) % tabButtons.length];
+      else if (e.key === 'Home') next = tabButtons[0];
+      else if (e.key === 'End') next = tabButtons[tabButtons.length - 1];
+      if (next) { e.preventDefault(); setTab(next.dataset.tab); next.focus(); }
+    });
+  });
+
+  function persist() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        theme: root.getAttribute('data-theme'),
+        tab: activeTab, lastSaved: state.lastSaved,
+        m1: state.m1, m2: state.m2, m3: state.m3
+      }));
+    } catch (e) {}
+  }
+
+  function restore() {
+    var data = {};
+    try { data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch (e) { data = {}; }
+    if (data.theme === 'dark' || data.theme === 'light') root.setAttribute('data-theme', data.theme);
+    if (typeof data.lastSaved === 'string') state.lastSaved = data.lastSaved;
+    ['m1', 'm2', 'm3'].forEach(function (mod) {
+      var saved = data[mod];
+      if (!saved || typeof saved !== 'object') return;
+      if (saved.inputs && typeof saved.inputs === 'object') {
+        Object.keys(saved.inputs).forEach(function (id) {
+          var el = $(id); if (el) el.value = saved.inputs[id];
+          state[mod].inputs[id] = saved.inputs[id];
+        });
+      }
+      state[mod].result = (saved.result && typeof saved.result === 'object') ? saved.result : null;
+      state[mod].stale = !!saved.stale;
+      if (mod === 'm2') state.m2.receivedT = (typeof saved.receivedT === 'number' && isFinite(saved.receivedT)) ? saved.receivedT : null;
+      if (mod === 'm3') state.m3.receivedZ = (typeof saved.receivedZ === 'number' && isFinite(saved.receivedZ)) ? saved.receivedZ : null;
+    });
+    renderAll();
+    setTab(data.tab || 'm1', false);
+  }
+
+  $('themeToggle').addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next); persist();
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('input[type="number"]'), function (inp) {
+    var mod = inp.dataset.module || moduleOfInput(inp.id);
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') e.preventDefault();
+      if (e.key === 'Enter') {
+        if (mod) { e.preventDefault(); calculate(mod); }
+      }
+    });
+    inp.addEventListener('input', function () {
+      if (inp.value && Number(String(inp.value).replace(',', '.')) < 0) {
+        inp.value = String(inp.value).replace(/-/g, '');
+      }
+      if (!mod) return;
+      state[mod].inputs[inp.id] = inp.value;
+      applyFieldState(inp.id, null);
+      if (state[mod].result) {
+        state[mod].stale = true;
+        render(mod); renderReport();
+      }
+      persist();
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-calc]'), function (btn) {
+    btn.addEventListener('click', function () { calculate(btn.dataset.calc); });
+  });
+
+  var btnM1toM2 = $('btn-m1-to-m2'); if (btnM1toM2) btnM1toM2.addEventListener('click', transferM1toM2);
+  var btnM3toM2 = $('btn-m3-to-m2'); if (btnM3toM2) btnM3toM2.addEventListener('click', transferM3toM2);
+  var btnM2toM3 = $('btn-m2-to-m3'); if (btnM2toM3) btnM2toM3.addEventListener('click', transferM2toM3);
+
+  var clearT = $('m2-ref-T-clear');
+  if (clearT) clearT.addEventListener('click', function () {
+    state.m2.receivedT = null; renderM2Received(); persist();
+  });
+  var clearZ = $('m3-ref-Z-clear');
+  if (clearZ) clearZ.addEventListener('click', function () {
+    state.m3.receivedZ = null; renderM3Received();
+    if (state.m3.result) { state.m3.stale = true; renderM3(); renderReport(); }
+    persist();
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-reset]'), function (btn) {
+    btn.addEventListener('click', function () {
+      var mod = btn.dataset.reset;
+      var panel = $('panel-' + mod); if (!panel) return;
+      Array.prototype.forEach.call(panel.querySelectorAll('input[type="number"]'), function (inp) {
+        inp.value = ''; state[mod].inputs[inp.id] = '';
+      });
+      clearModuleFieldStates(mod);
+      state[mod].result = null; state[mod].stale = false;
+      if (mod === 'm2') state.m2.receivedT = null;
+      if (mod === 'm3') state.m3.receivedZ = null;
+      render(mod); renderReport(); persist();
+    });
+  });
+
+  function downloadReportAsWord() {
+    var reportEl = $('report-doc'); if (!reportEl) return;
+    renderReport();
+    var content = reportEl.innerHTML;
+    var wordStyles =
+      '@page { size: A4 portrait; margin: 2cm 1.5cm 2cm 2cm; }' +
+      'body { font-family: "Times New Roman", serif; font-size: 11pt; color: #000000; background: #ffffff; margin: 0; padding: 0; }' +
+      '.doc-org-header { text-align: center; border-bottom: 2pt solid #000000; padding-bottom: 8pt; margin-bottom: 14pt; }' +
+      '.doc-org-name { font-family: "Times New Roman", serif; font-size: 12pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 4pt; color: #000000; }' +
+      '.doc-org-line { font-family: "Times New Roman", serif; font-size: 10.5pt; color: #000000; line-height: 1.5; }' +
+      '.doc-title { font-family: "Times New Roman", serif; font-size: 13pt; font-weight: bold; text-align: center; text-transform: uppercase; letter-spacing: 0.5pt; margin: 14pt 0 8pt; line-height: 1.4; color: #000000; }' +
+      '.doc-date { font-family: "Times New Roman", serif; text-align: center; font-size: 10.5pt; color: #000000; margin-bottom: 14pt; padding-bottom: 8pt; border-bottom: 0.75pt solid #000000; }' +
+      'table { border-collapse: collapse; width: 100%; margin-bottom: 16pt; }' +
+      'td, th { border: 1px solid #000000; padding: 5px; font-family: "Times New Roman", serif; font-size: 10pt; vertical-align: middle; color: #000000; background: #ffffff; }' +
+      'th { background: #e8e8e8; font-weight: bold; font-size: 9pt; text-transform: uppercase; text-align: left; }' +
+      'td.num { text-align: right; font-family: "Courier New", monospace; font-weight: bold; }' +
+      'td.sym { font-style: italic; font-weight: bold; }' +
+      'tr.section-row td { background: #d9d9d9; font-weight: bold; font-size: 9.5pt; text-transform: uppercase; padding: 6px 5px; }' +
+      'tr.result-row td { background: #f2f2f2; font-weight: bold; }' +
+      '.doc-conclusion { border: 1px solid #000000; padding: 10pt 12pt; margin-bottom: 18pt; background: #fafafa; }' +
+      '.doc-conclusion-title { font-family: "Times New Roman", serif; font-size: 10.5pt; font-weight: bold; text-transform: uppercase; margin: 0 0 8pt; }' +
+      '.doc-conclusion-text { font-family: "Times New Roman", serif; margin: 0; font-size: 11pt; line-height: 1.5; text-align: justify; }' +
+      '.doc-signature { border-top: 1px solid #000000; padding-top: 10pt; margin-top: 24pt; font-family: "Times New Roman", serif; font-size: 11pt; }' +
+      '.doc-sign-name { font-weight: bold; }' +
+      '.doc-sign-underline { display: inline-block; min-width: 90pt; border-bottom: 1px solid #000000; height: 12pt; }' +
+      '.doc-sign-mp { font-weight: bold; }' +
+      '.report-empty-hint { display: none; }';
+    var wordHtml = '\uFEFF<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head>' +
+      '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">' +
+      '<meta name="ProgId" content="Word.Document"><meta name="Generator" content="Microsoft Word 15">' +
+      '<title>Технический отчёт</title>' +
+      '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->' +
+      '<style>' + wordStyles + '</style></head><body>' + content + '</body></html>';
+    var blob = new Blob([wordHtml], { type: 'application/msword;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'report.doc'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1200);
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-report-action="refresh"]'), function (btn) {
+    btn.addEventListener('click', function () {
+      renderReport(); persist();
+      var original = btn.innerHTML;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Отчёт актуализирован';
+      btn.disabled = true;
+      setTimeout(function () { btn.innerHTML = original; btn.disabled = false; }, 1100);
+    });
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-report-action="word"]'), function (btn) {
+    btn.addEventListener('click', function () {
+      renderReport(); downloadReportAsWord();
+      var original = btn.innerHTML;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Файл report.doc сохранён';
+      btn.disabled = true;
+      setTimeout(function () { btn.innerHTML = original; btn.disabled = false; }, 1600);
+    });
+  });
+
+  var saveBtn = $('btn-save-project');
+  if (saveBtn) saveBtn.addEventListener('click', function () {
+    state.lastSaved = nowStr(); persist();
+    var label = $('btn-save-project-label');
+    if (label) {
+      var originalText = label.textContent;
+      saveBtn.classList.add('saved');
+      label.textContent = 'Сохранено в ' + state.lastSaved;
+      setTimeout(function () { saveBtn.classList.remove('saved'); label.textContent = originalText; }, 1800);
+    }
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-report-action="print"]'), function (btn) {
+    btn.addEventListener('click', function () {
+      renderReport();
+      setTimeout(function () { window.print(); }, 60);
+    });
+  });
+
+  restore();
+  if (!state.m1.result && !state.m2.result && !state.m3.result) renderAll();
+
+})();
+</script>
+
+<!-- ============================================================
+     СКРИПТ ОТПРАВКИ МОДУЛЯ 4 — ВАШ URL ПОДСТАВЛЕН
+     ============================================================ -->
+<script>
+  // ✅ Ваш URL из развёрнутого Apps Script
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxZy34GKsLvUR13LcXfTKfra9gL5LhJmoRSOQVX4vuy_caUSc--qAMhKARorAfzPvCj/exec';
+
+  const MODULE_NAME = 'Вариант 13. Работа техники';
+
+  document.getElementById('module4Form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const form = this;
+    const msg = document.getElementById('module4Message');
+    const btn = form.querySelector('button[type="submit"]');
+
+    const fields = {};
+    new FormData(form).forEach((value, key) => {
+      fields[key] = String(value).trim();
+    });
+
+    for (const [name, value] of Object.entries(fields)) {
+      if (!value) {
+        msg.textContent = 'Заполните поле: ' + name;
+        msg.className = 'module4-msg error';
+        return;
+      }
+    }
+
+    if (!(Number(fields['Часы']) > 0)) {
+      msg.textContent = 'Ошибка: значение поля «Часы» должно быть больше нуля';
+      msg.className = 'module4-msg error';
+      document.getElementById('m4-hours').classList.add('invalid');
+      return;
+    }
+    document.getElementById('m4-hours').classList.remove('invalid');
+
+    const dataToSend = { module: MODULE_NAME, fields: fields };
+
+    btn.disabled = true;
+    msg.textContent = 'Отправка…';
+    msg.className = 'module4-msg info';
+
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(dataToSend)
+      });
+      msg.textContent = '✓ Запрос отправлен. Проверьте лист «Журнал» в таблице.';
+      msg.className = 'module4-msg success';
+      form.reset();
+    } catch (err) {
+      msg.textContent = 'Ошибка: ' + err.message;
+      msg.className = 'module4-msg error';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
